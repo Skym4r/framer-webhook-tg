@@ -47,7 +47,7 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
-          text: `✅ Привет, ${userName}!\nТеперь вы будете получать заявки с сайта.`
+          text: `Привет, ${userName}!\nТеперь вы будете получать заявки с сайта.`
         })
       });
     }
