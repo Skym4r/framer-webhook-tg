@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   try {
     const body = req.body;
     
-    // Ваши реальные ключи из Framer:
+  
     const contact = body.Name || '—';        // телефон или email
     const name = body.Email || '—';          // имя
     
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: chatId,
+        chat_id: chatId, 
         text: message,
         parse_mode: 'Markdown'
       })
