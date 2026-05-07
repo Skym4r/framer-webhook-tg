@@ -11,6 +11,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "ioredis": "^5.10.1"
+    "ioredis": "^5.3.2"
   }
 }

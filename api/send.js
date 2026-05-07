@@ -17,24 +17,27 @@ export default async function handler(req, res) {
   try {
     const body = req.body;
     
-    const contact = body.Name || '—';
-    const name = body.Email || '—';
+    // Данные из Framer (ключи Name и Email, как мы выяснили ранее)
+    const contact = body.Name || '—'; 
+    const name = body.Email || '—'; 
     
     const message = `*🔔 Новая заявка с сайта!*
 
  *Имя:* ${name}
  *Контакт:* ${contact}
- *Время:* ${new Date().toLocaleString('ru-RU')}`;
+⏰ *Время:* ${new Date().toLocaleString('ru-RU')}`;
 
     const botToken = process.env.TG_BOT_TOKEN;
     
-    // Получаем всех пользователей
+    // 1. Получаем всех пользователей из Redis
     const userIds = await redis.smembers('tg_users');
     
     if (!userIds || userIds.length === 0) {
+      console.warn('No users found in database');
       return res.status(200).json({ status: 'ok', sent: 0 });
     }
 
+    // 2. Рассылаем сообщение всем (батчами по 10, чтобы не забанили за спам)
     let sentCount = 0;
 
     for (let i = 0; i < userIds.length; i += 10) {
@@ -53,9 +56,11 @@ export default async function handler(req, res) {
               })
             });
             
+            const data = await response.json();
+
             if (!response.ok) {
-              const errData = await response.json();
-              if (errData.error_code === 403) {
+              // Если бот заблокирован (403) — удаляем пользователя из базы
+              if (data.error_code === 403) {
                 await redis.srem('tg_users', chatId);
               }
             } else {
