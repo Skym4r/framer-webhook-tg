@@ -51,7 +51,8 @@ export default async function handler(req, res) {
     const message = `* Новая заявка с сайта!*
 
  *Имя:* ${name}
- *Контакт:* ${contact}`;
+ *Контакт:* ${contact}
+ *Время:* ${new Date().toLocaleString('ru-RU')}`;
 
     const botToken = process.env.TG_BOT_TOKEN;
     
