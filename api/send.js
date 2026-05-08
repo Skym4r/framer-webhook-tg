@@ -17,19 +17,31 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  // Обработка preflight запросов
+
+  console.log('📩 Request received:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body,
+    userAgent: req.headers['user-agent']
+  });
+
   if (req.method === 'OPTIONS') {
+    console.log('🔀 OPTIONS request');
     return res.status(200).json({}).headers(corsHeaders);
   }
 
   if (req.method !== 'POST') {
+    console.log('❌ Wrong method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' }).headers(corsHeaders);
   }
 
 
+
+
   try {
     const body = req.body;
-    
+     console.log('📦 Form data:', body);
     // Данные из Framer (ключи Name и Email, как мы выяснили ранее)
     const contact = body.Name || '—'; 
     const name = body.Email || '—'; 
@@ -93,7 +105,10 @@ export default async function handler(req, res) {
   }).headers(corsHeaders);
 
   } catch (error) {
-    console.error('Send error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('💥 Error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message 
+    }).headers(corsHeaders);
   }
 }
