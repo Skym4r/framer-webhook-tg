@@ -1,18 +1,31 @@
-// api/send.js
 import Redis from 'ioredis';
 
 const redis = new Redis(process.env.REDIS_URL);
 
+// CORS заголовки
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 export const config = {
   api: {
     bodyParser: true,
+    externalResolver: true,
   },
 };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  // Обработка preflight запросов
+  if (req.method === 'OPTIONS') {
+    return res.status(200).json({}).headers(corsHeaders);
   }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' }).headers(corsHeaders);
+  }
+
 
   try {
     const body = req.body;
@@ -74,10 +87,10 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({ 
-      status: 'ok', 
-      sent: sentCount,
-      total: userIds.length
-    });
+    status: 'ok', 
+    sent: sentCount,
+    total: userIds.length
+  }).headers(corsHeaders);
 
   } catch (error) {
     console.error('Send error:', error);
