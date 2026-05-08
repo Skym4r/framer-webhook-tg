@@ -48,11 +48,10 @@ export default async function handler(req, res) {
     const contact = body.Name || '—'; 
     const name = body.Email || '—'; 
     
-    const message = `*🔔 Новая заявка с сайта!*
+    const message = `* Новая заявка с сайта!*
 
  *Имя:* ${name}
- *Контакт:* ${contact}
- *Время:* ${new Date().toLocaleString('ru-RU')}`;
+ *Контакт:* ${contact}`;
 
     const botToken = process.env.TG_BOT_TOKEN;
     
