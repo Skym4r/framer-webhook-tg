@@ -1,8 +1,9 @@
+// api/send.js
 import Redis from 'ioredis';
 
 const redis = new Redis(process.env.REDIS_URL);
 
-// CORS заголовки
+// CORS настройки
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -17,36 +18,37 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+  // ✅ Устанавливаем заголовки для ВСЕХ ответов
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
   console.log('📩 Request received:', {
     method: req.method,
     url: req.url,
-    headers: req.headers,
-    body: req.body,
     userAgent: req.headers['user-agent']
   });
 
+  // ✅ Обработка preflight (OPTIONS) запроса
   if (req.method === 'OPTIONS') {
     console.log('🔀 OPTIONS request');
-    return res.status(200).json({}).headers(corsHeaders);
+    return res.status(200).end();
   }
 
+  // ✅ Разрешаем только POST
   if (req.method !== 'POST') {
     console.log('❌ Wrong method:', req.method);
-    return res.status(405).json({ error: 'Method not allowed' }).headers(corsHeaders);
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-
-
-
 
   try {
     const body = req.body;
-     console.log('📦 Form data:', body);
-    // Данные из Framer (ключи Name и Email, как мы выяснили ранее)
+    console.log('📦 Form data:', body);
+    
     const contact = body.Name || '—'; 
     const name = body.Email || '—'; 
     
-    const message = `* Новая заявка с сайта!*
+    const message = `*🔔 Новая заявка с сайта!*
 
  *Имя:* ${name}
  *Контакт:* ${contact}
@@ -54,7 +56,7 @@ export default async function handler(req, res) {
 
     const botToken = process.env.TG_BOT_TOKEN;
     
-    // 1. Получаем всех пользователей из Redis
+    // Получаем всех пользователей
     const userIds = await redis.smembers('tg_users');
     
     if (!userIds || userIds.length === 0) {
@@ -62,7 +64,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'ok', sent: 0 });
     }
 
-    // 2. Рассылаем сообщение всем (батчами по 10, чтобы не забанили за спам)
+    // Рассылаем батчами
     let sentCount = 0;
 
     for (let i = 0; i < userIds.length; i += 10) {
@@ -84,7 +86,6 @@ export default async function handler(req, res) {
             const data = await response.json();
 
             if (!response.ok) {
-              // Если бот заблокирован (403) — удаляем пользователя из базы
               if (data.error_code === 403) {
                 await redis.srem('tg_users', chatId);
               }
@@ -98,17 +99,18 @@ export default async function handler(req, res) {
       );
     }
 
+    // ✅ Возвращаем успех (заголовки уже установлены выше)
     return res.status(200).json({ 
-    status: 'ok', 
-    sent: sentCount,
-    total: userIds.length
-  }).headers(corsHeaders);
+      status: 'ok', 
+      sent: sentCount,
+      total: userIds.length
+    });
 
   } catch (error) {
     console.error('💥 Error:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
       message: error.message 
-    }).headers(corsHeaders);
+    });
   }
 }
